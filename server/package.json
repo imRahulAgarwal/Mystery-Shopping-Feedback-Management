@@ -1,0 +1,38 @@
+{
+	"name": "mystery-shopping-feedback-management-server",
+	"version": "1.0.0",
+	"description": "The backend code (server) for the mystery shopping & feedback management project.",
+	"main": "dist/server.js",
+	"type": "module",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"dev": "nodemon dist/server.js",
+		"dev:build": "tsc --watch"
+	},
+	"author": "Rahul Agarwal",
+	"license": "ISC",
+	"dependencies": {
+		"@types/bcrypt": "^6.0.0",
+		"@types/cors": "^2.8.19",
+		"@types/express": "^5.0.6",
+		"@types/mime-types": "^3.0.1",
+		"@types/morgan": "^1.9.10",
+		"@types/nodemailer": "^7.0.4",
+		"bcrypt": "^6.0.0",
+		"cors": "^2.8.5",
+		"dayjs": "^1.11.19",
+		"dotenv": "^17.2.3",
+		"express": "^5.2.1",
+		"joi": "^18.0.2",
+		"mime-types": "^3.0.2",
+		"mongoose": "^9.0.2",
+		"morgan": "^1.10.1",
+		"nodemailer": "^7.0.12",
+		"uuid": "^13.0.0",
+		"winston": "^3.19.0",
+		"winston-daily-rotate-file": "^5.0.0"
+	},
+	"devDependencies": {
+		"@types/node": "^25.0.3"
+	}
+}
