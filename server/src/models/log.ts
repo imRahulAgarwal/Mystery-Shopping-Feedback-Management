@@ -1,9 +1,6 @@
-import { Document, Schema, Types, model } from "mongoose";
-import type { LogType } from "../types/log.js";
+import { Schema, model } from "mongoose";
 
-export interface LogDocument extends LogType, Document {}
-
-const logSchema = new Schema<LogDocument>(
+const logSchema = new Schema(
 	{
 		timestamp: { type: Date, required: true },
 		level: { type: String, enum: ["debug", "info", "warn", "error"], required: true },
@@ -11,7 +8,7 @@ const logSchema = new Schema<LogDocument>(
 		message: { type: String, required: true },
 
 		actor: {
-			id: Types.ObjectId,
+			id: Schema.Types.ObjectId,
 			name: String,
 			permissions: [String],
 		},
@@ -36,6 +33,6 @@ const logSchema = new Schema<LogDocument>(
 	{ timestamps: true }
 );
 
-const LogEntry = model<LogDocument>("logs", logSchema);
+const LogEntry = model("logs", logSchema);
 
 export default LogEntry;
