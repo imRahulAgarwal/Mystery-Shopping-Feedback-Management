@@ -38,7 +38,15 @@ export function getValidFilter(filter: any): QueryFilter<unknown> {
 			return { isDeleted: false };
 		}
 
-		return { ...parsedFilter, isDeleted: false };
+		const filters: Record<string, unknown> = { isDeleted: false, ...parsedFilter };
+		const parsedFilterKeys = Object.keys(parsedFilter);
+		const isDeletedFilterExists = parsedFilterKeys?.includes("isDeleted") ? true : false;
+
+		if (isDeletedFilterExists && parsedFilter.isDeleted === true) {
+			filters.isDeleted = true;
+		}
+
+		return filters;
 	} catch {
 		return { isDeleted: false };
 	}

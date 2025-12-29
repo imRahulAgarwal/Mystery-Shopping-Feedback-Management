@@ -11,6 +11,8 @@ import {
 	getValidSortOrder,
 } from "../utils/queryUtil.js";
 import { generateSlug } from "../utils/slugUtil.js";
+import { logActivity } from "../utils/loggerUtil.js";
+import { industryLogger } from "../utils/loggers.js";
 
 export const readIndustries = asyncHandler(async (req, res) => {
 	const page = getValidPageNo(req.query.page as string | undefined);
@@ -46,7 +48,7 @@ export const readIndustries = asyncHandler(async (req, res) => {
 });
 
 export const readIndustry = asyncHandler(async (req, res) => {
-	const { industryId } = req.params;
+	const { id: industryId } = req.params;
 	if (!validateObjectId(industryId)) {
 		res.status(400).json({ success: false, error: "Invalid Industry ID." });
 		return;
@@ -63,9 +65,17 @@ export const readIndustry = asyncHandler(async (req, res) => {
 });
 
 export const createIndustry = asyncHandler(async (req, res) => {
+	const startedAt = process.hrtime.bigint();
+	const eventName = "CREATE_INDUSTRY";
+	const context = { panel: "superAdmin", module: "INDUSTRIES" };
+	const extraData: Record<string, unknown> = { context };
+	const metaData = { eventName, logger: industryLogger, req, startedAt };
+
 	const validation = industrySchema.validate(req.body);
 	if (validation.error) {
 		const errors = validation.error.details.map((issue) => ({ path: issue.path, message: issue.message }));
+		extraData["target"] = { errors };
+		logActivity({ ...metaData, level: "warn", message: "Validation error", extraData });
 		res.status(400).json({ success: false, errors });
 		return;
 	}
@@ -75,11 +85,18 @@ export const createIndustry = asyncHandler(async (req, res) => {
 
 	const industryExists = await Industry.findOne({ slug });
 	if (industryExists) {
+		extraData["target"] = { slug };
+		extraData["meta"] = { name, existingIndustryId: industryExists._id, isDeleted: industryExists.isDeleted };
+		logActivity({ ...metaData, level: "warn", message: "Industry details exists.", extraData });
 		res.status(400).json({ success: false, error: "Industry details exists." });
 		return;
 	}
 
 	const newIndustry = await Industry.create({ name, slug });
+
+	extraData["target"] = { name, slug };
+	extraData["meta"] = { newIndustryId: newIndustry._id };
+	logActivity({ ...metaData, level: "info", message: "Industry details created successfully.", extraData });
 
 	res.status(201).json({
 		success: true,
@@ -91,7 +108,13 @@ export const createIndustry = asyncHandler(async (req, res) => {
 });
 
 export const updateIndustry = asyncHandler(async (req, res) => {
-	const { industryId } = req.params;
+	const startedAt = process.hrtime.bigint();
+	const eventName = "UPDATE_INDUSTRY";
+	const context = { panel: "superAdmin", module: "INDUSTRIES" };
+	const extraData: Record<string, unknown> = { context };
+	const metaData = { eventName, logger: industryLogger, req, startedAt };
+
+	const { id: industryId } = req.params;
 	if (!validateObjectId(industryId)) {
 		res.status(400).json({ success: false, error: "Invalid Industry ID." });
 		return;
@@ -100,12 +123,16 @@ export const updateIndustry = asyncHandler(async (req, res) => {
 	const validation = industrySchema.validate(req.body);
 	if (validation.error) {
 		const errors = validation.error.details.map((issue) => ({ path: issue.path, message: issue.message }));
+		extraData["target"] = { errors };
+		logActivity({ ...metaData, level: "warn", message: "Validation error", extraData });
 		res.status(400).json({ success: false, errors });
 		return;
 	}
 
 	const industry = await Industry.findOne({ _id: industryId, isDeleted: false }).lean();
 	if (!industry) {
+		extraData["target"] = { industryId };
+		logActivity({ ...metaData, level: "warn", message: "Industry details not found.", extraData });
 		res.status(404).json({ success: false, error: "Industry details not found." });
 		return;
 	}
@@ -113,12 +140,22 @@ export const updateIndustry = asyncHandler(async (req, res) => {
 	const { name } = validation.value;
 	let slug: string = industry.slug;
 
+	const oldData = industry;
+
 	if (name !== industry.name) {
 		slug = generateSlug(name);
 	}
 
 	const industryExists = await Industry.findOne({ _id: { $ne: industryId }, slug });
 	if (industryExists) {
+		extraData["target"] = { slug };
+		extraData["meta"] = {
+			name,
+			currentIndustryId: industryId,
+			existingIndustryId: industryExists._id,
+			isDeleted: industryExists.isDeleted,
+		};
+		logActivity({ ...metaData, level: "warn", message: "Industry details exists.", extraData });
 		res.status(400).json({ success: false, error: "Industry details exists." });
 		return;
 	}
@@ -128,6 +165,10 @@ export const updateIndustry = asyncHandler(async (req, res) => {
 		{ $set: { name, slug } },
 		{ new: true }
 	);
+
+	extraData["target"] = { industryId };
+	extraData["meta"] = { oldData, newData: { name, slug } };
+	logActivity({ ...metaData, level: "info", message: "Industry details updated successfully.", extraData });
 
 	res.status(200).json({
 		success: true,
@@ -139,7 +180,13 @@ export const updateIndustry = asyncHandler(async (req, res) => {
 });
 
 export const deleteIndustry = asyncHandler(async (req, res) => {
-	const { industryId } = req.params;
+	const startedAt = process.hrtime.bigint();
+	const eventName = "DELETE_INDUSTRY";
+	const context = { panel: "superAdmin", module: "INDUSTRIES" };
+	const extraData: Record<string, unknown> = { context };
+	const metaData = { eventName, logger: industryLogger, req, startedAt };
+
+	const { id: industryId } = req.params;
 	if (!validateObjectId(industryId)) {
 		res.status(400).json({ success: false, error: "Invalid Industry ID." });
 		return;
@@ -147,12 +194,17 @@ export const deleteIndustry = asyncHandler(async (req, res) => {
 
 	const industry = await Industry.findOne({ _id: industryId, isDeleted: false });
 	if (!industry) {
+		extraData["target"] = { industryId };
+		logActivity({ ...metaData, level: "warn", message: "Industry details not found.", extraData });
 		res.status(404).json({ success: false, error: "Industry details not found." });
 		return;
 	}
 
 	industry.isDeleted = true;
 	await industry.save();
+
+	extraData["target"] = { industryId };
+	logActivity({ ...metaData, level: "info", message: "Industry details deleted successfully.", extraData });
 
 	res.status(200).json({
 		success: true,
@@ -164,7 +216,13 @@ export const deleteIndustry = asyncHandler(async (req, res) => {
 });
 
 export const restoreIndustry = asyncHandler(async (req, res) => {
-	const { industryId } = req.params;
+	const startedAt = process.hrtime.bigint();
+	const eventName = "RESTORE_INDUSTRY";
+	const context = { panel: "superAdmin", module: "INDUSTRIES" };
+	const extraData: Record<string, unknown> = { context };
+	const metaData = { eventName, logger: industryLogger, req, startedAt };
+
+	const { id: industryId } = req.params;
 	if (!validateObjectId(industryId)) {
 		res.status(400).json({ success: false, error: "Invalid Industry ID." });
 		return;
@@ -172,12 +230,17 @@ export const restoreIndustry = asyncHandler(async (req, res) => {
 
 	const industry = await Industry.findOne({ _id: industryId, isDeleted: true });
 	if (!industry) {
+		extraData["target"] = { industryId };
+		logActivity({ ...metaData, level: "warn", message: "Industry details not found.", extraData });
 		res.status(404).json({ success: false, error: "Industry details not found." });
 		return;
 	}
 
 	industry.isDeleted = false;
 	await industry.save();
+
+	extraData["target"] = { industryId };
+	logActivity({ ...metaData, level: "info", message: "Industry details restored successfully.", extraData });
 
 	res.status(200).json({
 		success: true,

@@ -9,6 +9,7 @@ import type { LogType } from "../types/log.js";
 type TLoggerOptions = {
 	folderPathArray: string[];
 	enableDbLogging: boolean;
+	enableExceptionRejectionHandlers?: boolean;
 };
 
 export type LogData = Partial<Omit<LogType, "level" | "event" | "message" | "timestamp">>;
@@ -19,10 +20,41 @@ class Logger {
 	logger: winston.Logger | null = null;
 	dbFailureCount: number = 0;
 	dbDisabled: boolean = false;
+	exceptionRejectionHandlers = {};
 
 	constructor(options: TLoggerOptions) {
 		this.logFolderPath = this.resolveLogFolderPath(options.folderPathArray);
 		this.enableDbLogging = options.enableDbLogging;
+
+		if (options.enableExceptionRejectionHandlers) {
+			this.exceptionRejectionHandlers = {
+				exceptionHandlers: [
+					new winston.transports.DailyRotateFile({
+						datePattern: "DD-MM-YYYY",
+						filename: "%DATE%",
+						dirname: this.resolveLogFolderPath(["logs", "system", "exceptions"]),
+						extension: ".jsonl",
+						zippedArchive: true,
+						utc: true,
+						maxSize: "20M",
+						format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+					}),
+				],
+				rejectionHandlers: [
+					new winston.transports.DailyRotateFile({
+						datePattern: "DD-MM-YYYY",
+						filename: "%DATE%",
+						dirname: this.resolveLogFolderPath(["logs", "system", "rejections"]),
+						extension: ".jsonl",
+						zippedArchive: true,
+						utc: true,
+						maxSize: "20M",
+						format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+					}),
+				],
+			};
+		}
+
 		try {
 			this.logger = winston.createLogger({
 				level: this.getEnvironmentLogLevel(),

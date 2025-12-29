@@ -1,6 +1,12 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import { getValidPageNo, getValidPageLimit, getValidSearch, getValidSortOrder } from "../utils/queryUtil.js";
+import {
+	getValidPageNo,
+	getValidPageLimit,
+	getValidSearch,
+	getValidSortOrder,
+	getValidFilter,
+} from "../utils/queryUtil.js";
 
 describe("Query Util Functions", () => {
 	describe("getValidPageNo()", () => {
@@ -120,6 +126,20 @@ describe("Query Util Functions", () => {
 
 		it("should return -1 for 'Asc' (mixed case)", () => {
 			assert.strictEqual(getValidSortOrder("Asc"), 1);
+		});
+	});
+
+	describe("getValidFilter()", () => {
+		it("valid case", () => {
+			assert.deepStrictEqual(getValidFilter('{"isDeleted":true}'), { isDeleted: true });
+		});
+
+		it("valid case", () => {
+			assert.deepStrictEqual(getValidFilter('{"isdeleted":true}'), { isDeleted: false, isdeleted: true });
+		});
+
+		it("valid case", () => {
+			assert.deepStrictEqual(getValidFilter('{"name":"bhai"}'), { isDeleted: false, name: "bhai" });
 		});
 	});
 });
