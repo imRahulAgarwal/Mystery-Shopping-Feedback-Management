@@ -1,28 +1,41 @@
 import type { Request } from "express";
 import Logger, { type LogData } from "./Logger.js";
 
-type TLogActivity = {
+type LogContext = {
 	req: Request;
 	logger: Logger;
-	level: "debug" | "info" | "warn" | "error";
 	eventName: string;
-	message: string;
-	extraData: LogData;
 	startedAt: bigint;
+	context: { panel: string; module: string };
 };
 
-export function logActivity(logData: TLogActivity) {
-	const { logger } = logData;
-	const { req, level, eventName, message, startedAt, extraData } = logData;
+export const initLogData = (
+	req: Request,
+	logger: Logger,
+	eventName: string,
+	context: { panel: string; module: string }
+): LogContext => {
+	return {
+		req,
+		logger,
+		eventName,
+		context,
+		startedAt: process.hrtime.bigint(),
+	};
+};
 
-	if (logger[level]) {
-		logger[level](eventName, message, {
-			...extraData,
-			// security: { ip: req.ip, userAgent: req.get("user-agent"), sessionId: "s" },
-			// actor: { id: req.loggedInUser._id, name: req.loggedInUser.fullName, permissions: req.userPermissions },
-			durationMs: Number(process.hrtime.bigint() - startedAt) / 1_000_000,
-			traceId: req.traceId,
-		});
-	} else {
-	}
+export function logActivity(
+	logContext: LogContext,
+	level: "debug" | "info" | "warn" | "error",
+	message: string,
+	extraData: Omit<LogData, "context" | "durationMs" | "traceId">
+) {
+	const { logger, context, eventName, req, startedAt } = logContext;
+
+	logger[level](eventName, message, {
+		...extraData,
+		context,
+		durationMs: Number(process.hrtime.bigint() - startedAt) / 1_000_000,
+		traceId: req.traceId,
+	});
 }
