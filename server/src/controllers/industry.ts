@@ -13,6 +13,7 @@ import { generateSlug } from "../utils/slugUtil.js";
 import { initLogData, logActivity } from "../utils/loggerUtil.js";
 import { industryLogger } from "../utils/loggers.js";
 import { getSearchQuery, getSortQuery } from "../utils/dbQuery.js";
+import { sendError, sendSuccess } from "../utils/responseUtil.js";
 
 export const readIndustries = asyncHandler(async (req, res) => {
 	const page = getValidPageNo(req.query.page as string | undefined);
@@ -35,24 +36,24 @@ export const readIndustries = asyncHandler(async (req, res) => {
 	const totalDocuments = await Industry.countDocuments({ isDeleted: false });
 	const filteredDocuments = await Industry.countDocuments(searchQuery);
 
-	res.status(200).json({ success: true, industries, totalDocuments, filteredDocuments });
+	sendSuccess(res, 200, { industries, totalDocuments, filteredDocuments });
 	return;
 });
 
 export const readIndustry = asyncHandler(async (req, res) => {
 	const { id: industryId } = req.params;
 	if (!validateObjectId(industryId)) {
-		res.status(400).json({ success: false, error: "Invalid Industry ID." });
+		sendError(res, 400, { error: "Invalid Industry ID." });
 		return;
 	}
 
 	const industry = await Industry.findOne({ _id: industryId, isDeleted: false }).lean();
 	if (!industry) {
-		res.status(404).json({ success: false, error: "Industry details not found." });
+		sendError(res, 404, { error: "Industry details not found." });
 		return;
 	}
 
-	res.status(200).json({ success: true, industry: { _id: industry._id, name: industry.name } });
+	sendSuccess(res, 200, { industry: { _id: industry._id, name: industry.name } });
 	return;
 });
 
@@ -66,7 +67,7 @@ export const createIndustry = asyncHandler(async (req, res) => {
 	if (validation.error) {
 		const errors = validation.error.details.map((issue) => ({ path: issue.path, message: issue.message }));
 		logActivity(logContext, "warn", "Validation error.", { meta: { errors } });
-		res.status(400).json({ success: false, errors });
+		sendError(res, 400, { errors });
 		return;
 	}
 
@@ -79,7 +80,7 @@ export const createIndustry = asyncHandler(async (req, res) => {
 			target: { slug },
 			meta: { existingIndustryId: industryExists._id, isDeleted: industryExists.isDeleted, name },
 		});
-		res.status(400).json({ success: false, error: "Industry details exists." });
+		sendError(res, 400, { error: "Industry details exists." });
 		return;
 	}
 
@@ -90,12 +91,7 @@ export const createIndustry = asyncHandler(async (req, res) => {
 		meta: { newIndustryId: newIndustry._id },
 	});
 
-	res.status(201).json({
-		success: true,
-		message: "Industry details created successfully.",
-		industry: newIndustry.toObject(),
-	});
-
+	sendSuccess(res, 201, { message: "Industry details created successfully.", industry: newIndustry.toObject() });
 	return;
 });
 
@@ -107,7 +103,7 @@ export const updateIndustry = asyncHandler(async (req, res) => {
 
 	const { id: industryId } = req.params;
 	if (!validateObjectId(industryId)) {
-		res.status(400).json({ success: false, error: "Invalid Industry ID." });
+		sendError(res, 400, { error: "Invalid Industry ID." });
 		return;
 	}
 
@@ -115,14 +111,14 @@ export const updateIndustry = asyncHandler(async (req, res) => {
 	if (validation.error) {
 		const errors = validation.error.details.map((issue) => ({ path: issue.path, message: issue.message }));
 		logActivity(logContext, "warn", "Validation error.", { meta: { errors } });
-		res.status(400).json({ success: false, errors });
+		sendError(res, 400, { errors });
 		return;
 	}
 
 	const industry = await Industry.findOne({ _id: industryId, isDeleted: false }).lean();
 	if (!industry) {
 		logActivity(logContext, "warn", "Industry details not found.", { target: { industryId } });
-		res.status(404).json({ success: false, error: "Industry details not found." });
+		sendError(res, 404, { error: "Industry details not found." });
 		return;
 	}
 
@@ -144,7 +140,7 @@ export const updateIndustry = asyncHandler(async (req, res) => {
 				isDeleted: industryExists.isDeleted,
 			},
 		});
-		res.status(400).json({ success: false, error: "Industry details exists." });
+		sendError(res, 400, { error: "Industry details exists." });
 		return;
 	}
 
@@ -159,12 +155,7 @@ export const updateIndustry = asyncHandler(async (req, res) => {
 		meta: { oldData: { name: industry.name, slug: industry.slug }, newData: { name, slug } },
 	});
 
-	res.status(200).json({
-		success: true,
-		message: "Industry details updated successfully.",
-		industry: udpatedIndustry?.toObject(),
-	});
-
+	sendSuccess(res, 200, { message: "Industry details updated successfully.", industry: udpatedIndustry?.toObject() });
 	return;
 });
 
@@ -176,14 +167,14 @@ export const deleteIndustry = asyncHandler(async (req, res) => {
 
 	const { id: industryId } = req.params;
 	if (!validateObjectId(industryId)) {
-		res.status(400).json({ success: false, error: "Invalid Industry ID." });
+		sendError(res, 400, { error: "Invalid Industry ID." });
 		return;
 	}
 
 	const industry = await Industry.findOne({ _id: industryId, isDeleted: false });
 	if (!industry) {
 		logActivity(logContext, "warn", "Industry details not found.", { target: { industryId } });
-		res.status(404).json({ success: false, error: "Industry details not found." });
+		sendError(res, 404, { error: "Industry details not found." });
 		return;
 	}
 
@@ -192,12 +183,7 @@ export const deleteIndustry = asyncHandler(async (req, res) => {
 
 	logActivity(logContext, "info", "Industry details deleted successfully.", { target: { industryId } });
 
-	res.status(200).json({
-		success: true,
-		message: "Industry details deleted successfully.",
-		industry: { _id: industry._id },
-	});
-
+	sendSuccess(res, 200, { message: "Industry details deleted successfully.", industry: { _id: industry._id } });
 	return;
 });
 
@@ -209,14 +195,14 @@ export const restoreIndustry = asyncHandler(async (req, res) => {
 
 	const { id: industryId } = req.params;
 	if (!validateObjectId(industryId)) {
-		res.status(400).json({ success: false, error: "Invalid Industry ID." });
+		sendError(res, 400, { error: "Invalid Industry ID." });
 		return;
 	}
 
 	const industry = await Industry.findOne({ _id: industryId, isDeleted: true });
 	if (!industry) {
 		logActivity(logContext, "warn", "Industry details not found.", { target: { industryId } });
-		res.status(404).json({ success: false, error: "Industry details not found." });
+		sendError(res, 404, { error: "Industry details not found." });
 		return;
 	}
 
@@ -225,11 +211,6 @@ export const restoreIndustry = asyncHandler(async (req, res) => {
 
 	logActivity(logContext, "info", "Industry details restored successfully.", { target: { industryId } });
 
-	res.status(200).json({
-		success: true,
-		message: "Industry details restored successfully.",
-		industry: { _id: industry._id },
-	});
-
+	sendSuccess(res, 200, { message: "Industry details restored successfully.", industry: { _id: industry._id } });
 	return;
 });

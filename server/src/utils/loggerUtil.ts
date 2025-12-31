@@ -32,8 +32,14 @@ export function logActivity(
 ) {
 	const { logger, context, eventName, req, startedAt } = logContext;
 
+	let actor = {};
+	if (req.isLoggedIn && req.loggedInUser) {
+		actor = { id: req.loggedInUser._id, name: req.loggedInUser.fullName, permissions: req.userPermissions };
+	}
+
 	logger[level](eventName, message, {
 		...extraData,
+		...(req.isLoggedIn ? { actor } : []),
 		context,
 		durationMs: Number(process.hrtime.bigint() - startedAt) / 1_000_000,
 		traceId: req.traceId,

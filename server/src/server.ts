@@ -5,6 +5,8 @@ import errorMiddleware from "./middlewares/errorMiddleware.js";
 import { addTraceId } from "./middlewares/miscMiddleware.js";
 import panelRouter from "./routes/panelRoutes.js";
 import connectDatabase from "./configs/connectDatabase.js";
+import initialize from "./utils/init.js";
+import authRouter from "./routes/authRoutes.js";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -13,11 +15,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 await connectDatabase();
+await initialize();
 
 app.use(addTraceId);
 app.use(morganMiddleware);
 app.use(errorMiddleware);
 
+app.use("/api/auth", authRouter);
 app.use("/panel/api", panelRouter);
 
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
