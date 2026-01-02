@@ -1,3 +1,3 @@
 import path from "path";
 
-export const projectRootPath = path.join(import.meta.dirname);
+export const projectRootPath = path.join(import.meta.dirname, "..");

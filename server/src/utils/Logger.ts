@@ -71,7 +71,7 @@ class Logger {
 	}
 
 	resolveLogFolderPath(folderPathArray: string[]): string {
-		const folderPath = path.join(projectRootPath, "..", ...folderPathArray);
+		const folderPath = path.join(projectRootPath, ...folderPathArray);
 		return folderPath;
 	}
 

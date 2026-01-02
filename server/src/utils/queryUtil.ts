@@ -1,5 +1,13 @@
 import type { QueryFilter } from "mongoose";
 
+type TSortQueryFunction = (sort: string | undefined, order: 1 | -1, sortableFields: string[]) => Record<string, 1 | -1>;
+
+type TSearchQueryFunction = (
+	search: string,
+	searchableFields: string[],
+	filter: QueryFilter<string>
+) => QueryFilter<string>;
+
 export function getValidPageNo(page: any): number {
 	let pageNo = parseInt(page, 10);
 	if (isNaN(pageNo) || pageNo < 1) {
@@ -39,15 +47,22 @@ export function getValidFilter(filter: any): QueryFilter<unknown> {
 		}
 
 		const filters: Record<string, unknown> = { isDeleted: false, ...parsedFilter };
-		const parsedFilterKeys = Object.keys(parsedFilter);
-		const isDeletedFilterExists = parsedFilterKeys?.includes("isDeleted") ? true : false;
-
-		if (isDeletedFilterExists && parsedFilter.isDeleted === true) {
-			filters.isDeleted = true;
-		}
-
 		return filters;
 	} catch {
 		return { isDeleted: false };
 	}
 }
+
+export const getSortQuery: TSortQueryFunction = (sort, order = 1, sortableFields) => {
+	if (!sort || !sortableFields.includes(sort)) return { createdAt: 1 };
+	return { [sort]: order };
+};
+
+export const getSearchQuery: TSearchQueryFunction = (search, searchableFields, filter) => {
+	const searchQuery = { ...filter };
+	if (search) {
+		searchQuery.$or = searchableFields.map((field) => ({ [field]: { $regex: search, $options: "i" } }));
+	}
+
+	return searchQuery;
+};

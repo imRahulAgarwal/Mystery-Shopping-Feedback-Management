@@ -19,9 +19,10 @@ await initialize();
 
 app.use(addTraceId);
 app.use(morganMiddleware);
-app.use(errorMiddleware);
 
 app.use("/api/auth", authRouter);
 app.use("/panel/api", panelRouter);
+
+app.use(errorMiddleware);
 
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));

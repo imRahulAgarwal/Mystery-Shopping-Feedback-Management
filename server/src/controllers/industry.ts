@@ -12,7 +12,7 @@ import {
 import { generateSlug } from "../utils/slugUtil.js";
 import { initLogData, logActivity } from "../utils/loggerUtil.js";
 import { industryLogger } from "../utils/loggers.js";
-import { getSearchQuery, getSortQuery } from "../utils/dbQuery.js";
+import { getSearchQuery, getSortQuery } from "../utils/queryUtil.js";
 import { sendError, sendSuccess } from "../utils/responseUtil.js";
 
 export const readIndustries = asyncHandler(async (req, res) => {

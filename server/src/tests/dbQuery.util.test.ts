@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import { getSortQuery } from "../utils/dbQuery.js";
+import { getSortQuery } from "../utils/queryUtil.js";
 
 describe("Database query util functions", () => {
 	describe("getSortQuery()", () => {
