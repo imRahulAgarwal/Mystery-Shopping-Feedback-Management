@@ -20,7 +20,7 @@ export const readIndustries = asyncHandler(async (req, res) => {
 	const limit = getValidPageLimit(req.query.limit as string | undefined);
 	const search = getValidSearch(req.query.search as string | undefined);
 	const order = getValidSortOrder(req.query.order as string | undefined) as 1 | -1;
-	const sort = req.query.order as string | undefined;
+	const sort = req.query.sort as string | undefined;
 	const filter = getValidFilter(req.query.filter);
 
 	const sortQuery = getSortQuery(sort, order, ["name", "slug", "createdAt"]);

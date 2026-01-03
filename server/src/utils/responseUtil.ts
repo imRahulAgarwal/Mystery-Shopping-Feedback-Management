@@ -15,13 +15,13 @@ type ErrorResponse = {
 export function sendSuccess(res: Response, statusCode: number, data: ObjectData): Response<SuccessResponse> {
 	return res.status(statusCode).json({
 		success: true,
-		data,
+		...data,
 	});
 }
 
 export function sendError(res: Response, statusCode: number, data: ObjectData): Response<ErrorResponse> {
 	return res.status(statusCode).json({
 		success: false,
-		data,
+		...data,
 	});
 }
