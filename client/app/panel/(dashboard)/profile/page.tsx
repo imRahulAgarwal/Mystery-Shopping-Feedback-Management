@@ -5,6 +5,8 @@ import { ChangePasswordFormData, changePasswordSchema } from "./changePasswordSc
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Lock } from "lucide-react";
+import { SubmitButton } from "@/components/panel/Buttons/Buttons";
+import Loader from "@/lib/ui/Loader/Loader";
 
 export default function ProfilePage() {
 	const {
@@ -128,12 +130,13 @@ export default function ProfilePage() {
 					</label>
 
 					{/* Submit */}
-					<button
-						type="submit"
-						disabled={isSubmitting}
-						className="btn bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80">
-						{isSubmitting ? "Changing password…" : "Change password"}
-					</button>
+					<div className="flex items-center justify-center">
+						<SubmitButton
+							onButtonClick={() => {}}
+							disabled={isSubmitting}
+							buttonLabel={isSubmitting ? <Loader size={16} /> : "Change Password"}
+						/>
+					</div>
 				</form>
 			</div>
 		</div>

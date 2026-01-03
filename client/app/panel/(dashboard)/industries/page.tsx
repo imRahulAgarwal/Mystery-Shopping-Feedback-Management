@@ -6,7 +6,8 @@ import { readIndustries } from "@/lib/api/industry";
 import type { ColumnDef, PaginationState, SortingState } from "@tanstack/react-table";
 import { useDebounce } from "@/hooks/useDebounce";
 import IndustryModal from "@/components/panel/Modal/IndustryModal/IndustryModal";
-import { AddButton, DeleteButton, UpdateButton } from "@/components/panel/Button/Button";
+import { CreateButton, DeleteButton, UpdateButton } from "@/components/panel/Buttons/Buttons";
+import PageLimitSelect from "@/components/panel/Select/PageLimit/PageLimit";
 
 type Industry = {
 	_id: string;
@@ -110,31 +111,25 @@ export default function IndustriesPage() {
 			{/* Header */}
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-3">
 				<h2 className="text-lg font-semibold text-slate-800">Industry Management</h2>
-
-				<AddButton
-					buttonLabel="Add Industry"
-					showLabel={true}
-					onButtonClick={() => setShowCreateUpdateModal(true)}
-				/>
+				<CreateButton buttonLabel="Add Industry" onButtonClick={() => setShowCreateUpdateModal(true)} />
 			</div>
 
 			{/* Controls */}
 			<div className="my-2 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
 				{/* Left actions */}
 				<div className="flex flex-wrap items-center gap-2">
-					<select
-						className="btn w-fit bg-slate-200 px-4 text-sm hover:bg-slate-300"
-						onChange={(e) =>
-							setPagination((prev) => ({
-								...prev,
-								pageSize: Number(e.target.value),
-							}))
-						}>
-						<option value="10">10 / page</option>
-						<option value="25">25 / page</option>
-						<option value="50">50 / page</option>
-						<option value="100">100 / page</option>
-					</select>
+					<PageLimitSelect
+						selectedValue={pagination.pageSize}
+						options={[
+							{ label: "10 / page", value: "10" },
+							{ label: "25 / page", value: "25" },
+							{ label: "50 / page", value: "50" },
+							{ label: "100 / page", value: "100" },
+						]}
+						onOptionChange={(pageSize) =>
+							setPagination((prev) => ({ ...prev, pageSize: Number(pageSize) }))
+						}
+					/>
 				</div>
 
 				{/* Search */}

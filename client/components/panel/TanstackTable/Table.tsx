@@ -10,7 +10,8 @@ import {
 	SortingState,
 	OnChangeFn,
 } from "@tanstack/react-table";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronsUpDown, ChevronUp } from "lucide-react";
+import { NextButton, PrevButton } from "../Buttons/Buttons";
 
 type DataTableProps<T> = {
 	columns: ColumnDef<T>[];
@@ -133,21 +134,15 @@ export function DataTable<T>({
 										</span>
 									)}
 
-									<button
-										type="button"
-										onClick={() => table.previousPage()}
-										disabled={!table.getCanPreviousPage()}
-										className="btn w-fit p-2 rounded bg-slate-200 hover:bg-slate-300 disabled:opacity-50">
-										<ChevronLeft size={14} />
-									</button>
+									<PrevButton
+										isButtonDisabled={!table.getCanPreviousPage()}
+										onButtonClick={() => table.previousPage()}
+									/>
 
-									<button
-										type="button"
-										onClick={() => table.nextPage()}
-										disabled={!table.getCanNextPage()}
-										className="btn w-fit p-2 rounded bg-slate-200 hover:bg-slate-300 disabled:opacity-50">
-										<ChevronRight size={14} />
-									</button>
+									<NextButton
+										isButtonDisabled={!table.getCanNextPage()}
+										onButtonClick={() => table.nextPage()}
+									/>
 								</div>
 							</div>
 						</td>

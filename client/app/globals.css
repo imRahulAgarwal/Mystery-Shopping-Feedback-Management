@@ -19,8 +19,4 @@
 	.input {
 		@apply p-2 w-full border border-slate-200 rounded-xs focus:outline-none focus-visible:ring-blue-300 focus-visible:ring-1;
 	}
-
-	.btn {
-		@apply w-full rounded-xs transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60 p-2 text-sm font-medium;
-	}
 }

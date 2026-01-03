@@ -5,10 +5,11 @@ import { IndustryData, industrySchema } from "./industrySchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { createIndustry, readIndustry, updateIndustry } from "@/lib/api/industry";
-import clsx from "clsx";
 import { toast } from "react-toastify";
 import { checkIsAxiosError } from "@/lib/util/checkIsAxiosError";
 import InputError from "@/lib/ui/InputError/InputError";
+import { CloseButton, SubmitButton } from "../../Buttons/Buttons";
+import Loader from "@/lib/ui/Loader/Loader";
 
 type IndustryModalProps = {
 	industryIdToEdit?: string;
@@ -26,8 +27,6 @@ export default function IndustryModal({ industryIdToEdit, closeModal, onSuccess 
 		setValue,
 		reset,
 	} = useForm<IndustryData>({ mode: "onSubmit", resolver: zodResolver(industrySchema) });
-
-	console.log(errors.name);
 
 	const onFormSubmit = async (data: IndustryData) => {
 		let response = null;
@@ -80,29 +79,17 @@ export default function IndustryModal({ industryIdToEdit, closeModal, onSuccess 
 						</div>
 
 						{/* Actions */}
-						<div className="mt-4 flex justify-end gap-2">
-							<button
-								onClick={closeModal}
-								type="button"
-								className={clsx(
-									"btn w-fit px-4",
-									"border border-gray-300",
-									"text-gray-700 hover:bg-gray-100",
-									"focus:outline-none focus-visible:ring-gray-300 focus-visible:ring-2"
-								)}>
-								Close
-							</button>
-
-							<button
-								type="submit"
-								className={clsx(
-									"btn w-fit px-4",
-									"border border-blue-500",
-									"text-white bg-blue-600 hover:bg-blue-700",
-									"focus:outline-none focus-visible:ring-blue-500 focus-visible:ring-2"
-								)}>
-								Save
-							</button>
+						<div className="mt-4 flex justify-center">
+							<div className="ml-auto flex gap-2 items-center relative">
+								<CloseButton buttonLabel="Close" onButtonClick={closeModal} disabled={isSubmitting} />
+								<SubmitButton
+									disabled={isSubmitting}
+									buttonLabel={
+										isSubmitting ? <Loader size={16} /> : industryIdToEdit ? "Update" : "Create"
+									}
+									onButtonClick={() => {}}
+								/>
+							</div>
 						</div>
 					</form>
 				</div>

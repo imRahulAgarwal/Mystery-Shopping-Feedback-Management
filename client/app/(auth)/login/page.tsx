@@ -5,6 +5,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { LoginFormData, loginSchema } from "./loginSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { SubmitButton } from "@/components/panel/Buttons/Buttons";
+import Loader from "@/lib/ui/Loader/Loader";
 // import Link from "next/link";
 
 export default function LoginPage() {
@@ -102,12 +104,13 @@ export default function LoginPage() {
 					</div>
 
 					{/* Submit */}
-					<button
-						type="submit"
-						disabled={isSubmitting}
-						className="btn bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80">
-						{isSubmitting ? "Signing in…" : "Sign in"}
-					</button>
+					<div className="flex items-center justify-center">
+						<SubmitButton
+							onButtonClick={() => {}}
+							disabled={isSubmitting}
+							buttonLabel={isSubmitting ? <Loader size={16} /> : "Login"}
+						/>
+					</div>
 				</form>
 			</div>
 		</section>
