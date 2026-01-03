@@ -37,11 +37,11 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
 	}, [isDesktopScreen, isSidebarOpen]);
 
 	return (
-		<div className="flex h-screen relative">
+		<div className="flex h-screen relative overflow-hidden">
 			<Sidebar isOpen={isSidebarOpen} closeSidebar={closeSidebar} />
 			<div className="flex-1 flex flex-col">
 				<Header toggleSidebar={() => setIsSidebarOpen((prev) => !prev)} />
-				<main className="flex-1 p-4">{children}</main>
+				<main className="flex-1 p-4 overflow-y-auto">{children}</main>
 			</div>
 		</div>
 	);
