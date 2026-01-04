@@ -2,18 +2,28 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { DataTable } from "@/components/panel/TanstackTable/Table";
-import { readIndustries } from "@/lib/api/industry";
+import { deleteIndustry, readIndustries, restoreIndustry } from "@/lib/api/industry";
 import type { ColumnDef, PaginationState, SortingState } from "@tanstack/react-table";
 import { useDebounce } from "@/hooks/useDebounce";
 import IndustryModal from "@/components/panel/Modal/IndustryModal/IndustryModal";
 import { CreateButton, DeleteButton, UpdateButton } from "@/components/panel/Buttons/Buttons";
 import PageLimitSelect from "@/components/panel/Select/PageLimit/PageLimit";
+import ConfirmationModal from "@/components/panel/Modal/ConfirmationModal/ConfirmationModal";
+import { toast } from "react-toastify";
+import { checkIsAxiosError } from "@/lib/util/checkIsAxiosError";
+import FilterDropdown from "@/components/panel/FilterDropdown/FilterDropdown";
+import RestoreButton from "@/components/panel/Buttons/Restore/Restore";
 
 type Industry = {
 	_id: string;
 	name: string;
 	slug: string;
 	createdAt: Date;
+};
+
+type DeletedFilter = "active" | "deleted";
+type FilterState = {
+	isDeleted?: boolean;
 };
 
 export default function IndustriesPage() {
@@ -33,16 +43,65 @@ export default function IndustriesPage() {
 	const debouncedSearch = useDebounce(search, 400);
 
 	const [showCreateUpdateModal, setShowCreateUpdateModal] = useState(false);
-	const [industryIdToEdit, setIndustryIdToEdit] = useState("");
+
+	const [showDeleteConfirmationModal, setShowDeleteConfirmationModal] = useState(false);
+	const [selectedIndustryId, setSelectedIndustryId] = useState<string | null>(null);
+
+	const [filter, setFilter] = useState<FilterState>({});
+	const deletedValue: DeletedFilter = filter.isDeleted === true ? "deleted" : "active";
+
+	const fetchData = useCallback(async () => {
+		setIsLoading(true);
+
+		try {
+			const response = await readIndustries({
+				page: pagination.pageIndex + 1,
+				limit: pagination.pageSize,
+				search: debouncedSearch,
+				sort: sorting[0]?.id,
+				order: sorting[0]?.desc === true ? "desc" : "asc",
+				filter: JSON.stringify(filter),
+			});
+
+			if (response.success) {
+				setData(response.industries);
+				setTotalDocuments(response.totalDocuments);
+				setFilteredDocuments(response.filteredDocuments);
+			}
+		} catch (error) {
+			console.log(error);
+		} finally {
+			setIsLoading(false);
+		}
+	}, [pagination, sorting, debouncedSearch, filter]);
 
 	const handleUpdateButtonClick = useCallback((id: string) => {
-		setIndustryIdToEdit(id);
+		setSelectedIndustryId(id);
 		setShowCreateUpdateModal(true);
 	}, []);
 
 	const handleDeleteButtonClick = useCallback((id: string) => {
-		console.log(id);
+		setSelectedIndustryId(id);
+		setShowDeleteConfirmationModal(true);
 	}, []);
+
+	const handleRestoreButtonClick = useCallback(
+		(id: string) => {
+			restoreIndustry(id)
+				.then((data) => {
+					toast.success(data.message);
+					fetchData();
+				})
+				.catch((error) => {
+					if (checkIsAxiosError(error)) {
+						toast.error(error.response?.data?.error || "Failed to restore industry details.");
+					} else {
+						toast.error("Failed to restore industry details.");
+					}
+				});
+		},
+		[fetchData]
+	);
 
 	const tableColumns: ColumnDef<Industry>[] = [
 		{ accessorKey: "name", header: "Name" },
@@ -56,37 +115,47 @@ export default function IndustriesPage() {
 			cell: ({ row }) => {
 				return (
 					<div className="flex gap-2">
-						<UpdateButton onButtonClick={() => handleUpdateButtonClick(row.original._id)} />
-						<DeleteButton onButtonClick={() => handleDeleteButtonClick(row.original._id)} />
+						{filter.isDeleted === true ? (
+							<RestoreButton onButtonClick={() => handleRestoreButtonClick(row.original._id)} />
+						) : (
+							<>
+								<UpdateButton onButtonClick={() => handleUpdateButtonClick(row.original._id)} />
+								<DeleteButton onButtonClick={() => handleDeleteButtonClick(row.original._id)} />
+							</>
+						)}
 					</div>
 				);
 			},
 		},
 	];
 
-	const fetchData = useCallback(async () => {
+	const handleNoConfirmationButton = useCallback(() => {
+		setSelectedIndustryId(null);
+		setShowDeleteConfirmationModal(false);
+	}, []);
+
+	const handleYesConfirmationButton = useCallback(() => {
 		setIsLoading(true);
-
-		try {
-			const response = await readIndustries({
-				page: pagination.pageIndex + 1,
-				limit: pagination.pageSize,
-				search: debouncedSearch,
-				sort: sorting[0]?.id,
-				order: sorting[0]?.desc === true ? "desc" : "asc",
-			});
-
-			if (response.success) {
-				setData(response.industries);
-				setTotalDocuments(response.totalDocuments);
-				setFilteredDocuments(response.filteredDocuments);
-			}
-		} catch (error) {
-			console.log(error);
-		} finally {
-			setIsLoading(false);
+		if (selectedIndustryId) {
+			deleteIndustry(selectedIndustryId)
+				.then((data) => {
+					toast.success(data.message);
+					fetchData();
+				})
+				.catch((error) => {
+					if (checkIsAxiosError(error)) {
+						toast.error(error.response?.data?.error || "Failed to remove industry details.");
+					} else {
+						toast.error(error.message);
+					}
+				})
+				.finally(() => {
+					setSelectedIndustryId(null);
+					setShowDeleteConfirmationModal(false);
+					setIsLoading(false);
+				});
 		}
-	}, [pagination, sorting, debouncedSearch]);
+	}, [selectedIndustryId, fetchData]);
 
 	const onCreateUpdateSuccess = useCallback(() => {
 		fetchData();
@@ -95,7 +164,7 @@ export default function IndustriesPage() {
 
 	const onModalClose = useCallback(() => {
 		setShowCreateUpdateModal(false);
-		setIndustryIdToEdit("");
+		setSelectedIndustryId(null);
 	}, []);
 
 	useEffect(() => {
@@ -130,6 +199,36 @@ export default function IndustriesPage() {
 							setPagination((prev) => ({ ...prev, pageSize: Number(pageSize) }))
 						}
 					/>
+					<FilterDropdown>
+						<div className="flex flex-col gap-2">
+							<label htmlFor="deletedFilter" className="text-sm font-medium text-gray-700">
+								Status
+							</label>
+
+							<select
+								id="deletedFilter"
+								value={deletedValue}
+								onChange={(e) => {
+									const value = e.target.value as DeletedFilter;
+
+									setFilter((prev) => {
+										const next = { ...prev };
+
+										if (value === "active") {
+											delete next.isDeleted;
+										} else {
+											next.isDeleted = true;
+										}
+
+										return next;
+									});
+								}}
+								className="rounded-xs border border-slate-300 px-2 py-1 text-sm focus:outline-none focus-visible:ring-slate-300 focus-visible:ring-1">
+								<option value="active">Active</option>
+								<option value="deleted">Deleted</option>
+							</select>
+						</div>
+					</FilterDropdown>
 				</div>
 
 				{/* Search */}
@@ -142,7 +241,7 @@ export default function IndustriesPage() {
 						type="text"
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
-						className="w-full lg:w-64 rounded border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+						className="w-full lg:w-64 rounded-xs border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
 					/>
 				</div>
 			</div>
@@ -164,7 +263,15 @@ export default function IndustriesPage() {
 				<IndustryModal
 					closeModal={onModalClose}
 					onSuccess={onCreateUpdateSuccess}
-					industryIdToEdit={industryIdToEdit}
+					selectedIndustryId={selectedIndustryId}
+				/>
+			)}
+
+			{showDeleteConfirmationModal && (
+				<ConfirmationModal
+					onCloseButtonClick={handleNoConfirmationButton}
+					onSubmitButtonClick={handleYesConfirmationButton}
+					isSubmitting={isLoading}
 				/>
 			)}
 		</div>

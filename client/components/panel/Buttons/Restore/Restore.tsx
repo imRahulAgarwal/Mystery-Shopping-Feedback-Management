@@ -1,26 +1,26 @@
-import Button from "@/lib/ui/Button/Button";
 import clsx from "clsx";
-import { Trash2 } from "lucide-react";
+import { Edit, RotateCcw } from "lucide-react";
+import Button from "@/lib/ui/Button/Button";
 
-type DeleteButtonProps = {
+type RestoreButtonProps = {
 	onButtonClick: () => void;
 	disabled?: boolean;
 	buttonLabel?: string;
 };
 
-export default function DeleteButton({ buttonLabel, disabled = false, onButtonClick = () => {} }: DeleteButtonProps) {
+export default function RestoreButton({ buttonLabel, disabled = false, onButtonClick }: RestoreButtonProps) {
 	return (
 		<Button
 			onClick={onButtonClick}
 			className={clsx(
 				"flex items-center justify-center gap-1",
 				"text-sm font-medium text-white",
-				"bg-red-500 hover:bg-red-600",
+				"bg-gray-500 hover:bg-gray-600",
 				"px-4 py-2"
 			)}
 			disabled={disabled}
-			title="Delete">
-			<Trash2 size={16} />
+			title="Restore">
+			<RotateCcw size={16} />
 			{buttonLabel && <span>{buttonLabel}</span>}
 		</Button>
 	);

@@ -16,7 +16,7 @@ export default function UpdateButton({ buttonLabel, disabled = false, onButtonCl
 				"flex items-center justify-center gap-1",
 				"text-sm font-medium text-white",
 				"bg-blue-500 hover:bg-blue-600",
-				"px-4"
+				"px-4 py-2"
 			)}
 			disabled={disabled}
 			title="Update">

@@ -12,12 +12,12 @@ import { CloseButton, SubmitButton } from "../../Buttons/Buttons";
 import Loader from "@/lib/ui/Loader/Loader";
 
 type IndustryModalProps = {
-	industryIdToEdit?: string;
+	selectedIndustryId: string | null;
 	closeModal: () => void;
 	onSuccess: () => void;
 };
 
-export default function IndustryModal({ industryIdToEdit, closeModal, onSuccess }: IndustryModalProps) {
+export default function IndustryModal({ selectedIndustryId, closeModal, onSuccess }: IndustryModalProps) {
 	const [modalTitle, setModalTitle] = useState("Add Industry");
 
 	const {
@@ -31,8 +31,8 @@ export default function IndustryModal({ industryIdToEdit, closeModal, onSuccess 
 	const onFormSubmit = async (data: IndustryData) => {
 		let response = null;
 		try {
-			if (industryIdToEdit) {
-				response = await updateIndustry(industryIdToEdit, data);
+			if (selectedIndustryId) {
+				response = await updateIndustry(selectedIndustryId, data);
 			} else {
 				response = await createIndustry(data);
 			}
@@ -50,19 +50,19 @@ export default function IndustryModal({ industryIdToEdit, closeModal, onSuccess 
 	};
 
 	useEffect(() => {
-		if (industryIdToEdit) {
-			readIndustry(industryIdToEdit).then((data) => {
+		if (selectedIndustryId) {
+			readIndustry(selectedIndustryId).then((data) => {
 				setValue("name", data.industry.name);
 				setModalTitle("Update Industry");
 			});
 		}
-	}, [industryIdToEdit, setValue]);
+	}, [selectedIndustryId, setValue]);
 
 	return (
 		<>
 			<div className="fixed inset-0 bg-black/50 z-40"></div>
 			<div className="fixed inset-0 z-50 flex items-center justify-center ">
-				<div className="w-full max-w-md rounded-md bg-white shadow-md border border-gray-200" role="dialog">
+				<div className="w-full max-w-md rounded-xs bg-white shadow-md border border-gray-200" role="dialog">
 					<div className="border-b border-slate-200 p-4">
 						<h2 className="text-lg font-semibold text-gray-900">{modalTitle}</h2>
 					</div>
@@ -81,11 +81,19 @@ export default function IndustryModal({ industryIdToEdit, closeModal, onSuccess 
 						{/* Actions */}
 						<div className="mt-4 flex justify-center">
 							<div className="ml-auto flex gap-2 items-center relative">
-								<CloseButton buttonLabel="Close" onButtonClick={closeModal} disabled={isSubmitting} />
+								<CloseButton
+									buttonLabel="Close"
+									onButtonClick={() => {
+										closeModal();
+										reset();
+										setModalTitle("Add Industry");
+									}}
+									disabled={isSubmitting}
+								/>
 								<SubmitButton
 									disabled={isSubmitting}
 									buttonLabel={
-										isSubmitting ? <Loader size={16} /> : industryIdToEdit ? "Update" : "Create"
+										isSubmitting ? <Loader size={16} /> : selectedIndustryId ? "Update" : "Create"
 									}
 									onButtonClick={() => {}}
 								/>
